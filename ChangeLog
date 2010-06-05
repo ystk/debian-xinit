@@ -1,3 +1,11 @@
+commit d243b9943879ec2790d65785805aefdfbb64a378
+Author: Rémi Cardona <remi@gentoo.org>
+Date:   Sat Nov 14 14:51:59 2009 +0100
+
+    xinit 1.2.0
+    
+    Signed-off-by: Rémi Cardona <remi@gentoo.org>
+
 commit 561b6c70648b585e36241c898f0b2dbba3cb2d24
 Author: Jeremy Huddleston <jeremyhu@freedesktop.org>
 Date:   Tue Oct 27 18:24:31 2009 -0700
