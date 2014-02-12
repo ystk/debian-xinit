@@ -5,8 +5,8 @@ XCOMM This is just a sample implementation of a slightly less primitive
 XCOMM interface than xinit.  It looks for user .xinitrc and .xserverrc
 XCOMM files, then system xinitrc and xserverrc files, else lets xinit choose
 XCOMM its default.  The system xinitrc should probably do things like check
-XCOMM for .Xresources files and merge them in, startup up a window manager,
-XCOMM and pop a clock and serveral xterms.
+XCOMM for .Xresources files and merge them in, start up a window manager,
+XCOMM and pop a clock and several xterms.
 XCOMM
 XCOMM Site administrators are STRONGLY urged to write nicer versions.
 XCOMM
@@ -21,7 +21,7 @@ XCOMM This allows startx to be placed in a place like /usr/bin or /usr/local/bin
 XCOMM and people may use X without changing their PATH.
 XCOMM Note that we put our own bin directory at the front of the path, and
 XCOMM the standard system path at the back, since if you are using the Xorg
-XCOMM server theres a pretty good chance you want to bias the Xorg clients
+XCOMM server there's a pretty good chance you want to bias the Xorg clients
 XCOMM over the old system's clients.
 
 XCOMM First our compiled path
@@ -83,19 +83,19 @@ serverargs=""
 #ifdef __APPLE__
 
 if [ "x$X11_PREFS_DOMAIN" = x ] ; then
-    export X11_PREFS_DOMAIN=LAUNCHD_ID_PREFIX".X11"
+    export X11_PREFS_DOMAIN=BUNDLE_ID_PREFIX".X11"
 fi
 
 XCOMM Initialize defaults (this will cut down on "safe" error messages)
-if ! defaults read $X11_PREFS_DOMAIN cache_fonts >& /dev/null ; then
+if ! defaults read $X11_PREFS_DOMAIN cache_fonts > /dev/null 2>&1 ; then
     defaults write $X11_PREFS_DOMAIN cache_fonts -bool true
 fi
 
-if ! defaults read $X11_PREFS_DOMAIN no_auth >& /dev/null ; then
+if ! defaults read $X11_PREFS_DOMAIN no_auth > /dev/null 2>&1 ; then
     defaults write $X11_PREFS_DOMAIN no_auth -bool false
 fi
 
-if ! defaults read $X11_PREFS_DOMAIN nolisten_tcp >& /dev/null ; then
+if ! defaults read $X11_PREFS_DOMAIN nolisten_tcp > /dev/null 2>&1 ; then
     defaults write $X11_PREFS_DOMAIN nolisten_tcp -bool true
 fi
 
@@ -126,18 +126,22 @@ if [ x`defaults read $X11_PREFS_DOMAIN nolisten_tcp` = x1 ] ; then
     defaultserverargs="$defaultserverargs -nolisten tcp"
 fi
 
-if defaults read $X11_PREFS_DOMAIN dpi >& /dev/null ; then
+if defaults read $X11_PREFS_DOMAIN dpi > /dev/null 2>&1 ; then
     defaultserverargs="$defaultserverargs -dpi `defaults read $X11_PREFS_DOMAIN dpi`"
 fi
-
-for ((d=0; ; d++)) ; do
-    [[ -e /tmp/.X$d-lock ]] || break
-done
-defaultdisplay=":$d"
 
 #else
 enable_xauth=1
 #endif
+
+XCOMM Automatically determine an unused $DISPLAY
+d=0
+while true ; do
+    [ -e /tmp/.X$d-lock ] || break
+    d=$(($d + 1))
+done
+defaultdisplay=":$d"
+unset d
 
 #if defined(__SCO__) || defined(__UNIXWARE__)
 
@@ -197,7 +201,7 @@ XCOMM process client arguments
 if [ x"$client" = x ]; then
     client=$defaultclient
 
-    XCOMM if no client arguments either, use rc file instead
+    XCOMM For compatibility reasons, only use startxrc if there were no client command line arguments
     if [ x"$clientargs" = x ]; then
         if [ -f "$userclientrc" ]; then
             client=$userclientrc
@@ -210,27 +214,36 @@ if [ x"$client" = x ]; then
             client=$scosysclientrc
 #endif
         fi
-
-        clientargs=$defaultclientargs
     fi
+fi
+
+XCOMM if no client arguments, use defaults
+if [ x"$clientargs" = x ]; then
+    clientargs=$defaultclientargs
 fi
 
 XCOMM process server arguments
 if [ x"$server" = x ]; then
     server=$defaultserver
 
-    XCOMM if no server arguments or display either, use defaults
+    XCOMM For compatibility reasons, only use xserverrc if there were no server command line arguments
     if [ x"$serverargs" = x -a x"$display" = x ]; then
-	XCOMM For compatibility reasons, only use xserverrc if there were no server command line arguments
 	if [ -f "$userserverrc" ]; then
 	    server=$userserverrc
 	elif [ -f "$sysserverrc" ]; then
 	    server=$sysserverrc
 	fi
-
-	serverargs=$defaultserverargs
-	display=$defaultdisplay
     fi
+fi
+
+XCOMM if no server arguments, use defaults
+if [ x"$serverargs" = x ]; then
+    serverargs=$defaultserverargs
+fi
+
+XCOMM if no display, use default
+if [ x"$display" = x ]; then
+    display=$defaultdisplay
 fi
 
 if [ x"$enable_xauth" = x1 ] ; then
@@ -278,7 +291,8 @@ if [ x"$enable_xauth" = x1 ] ; then
 add :$dummy . $mcookie
 EOF
 #if defined(__APPLE__) || defined(__CYGWIN__)
-    serverargs=${serverargs}" -auth '"${xserverauthfile}"'"
+    xserverauthfilequoted=$(echo ${xserverauthfile} | sed "s/'/'\\\\''/g")
+    serverargs=${serverargs}" -auth '"${xserverauthfilequoted}"'"
 #else
     serverargs=${serverargs}" -auth "${xserverauthfile}
 #endif
