@@ -5,11 +5,9 @@ Robinson.
  startx.man |   54 ++++++++++++++++++++++--------------------------------
  1 file changed, 22 insertions(+), 32 deletions(-)
 
-Index: xinit/startx.man
-===================================================================
---- xinit.orig/startx.man	2009-12-06 23:12:44.000000000 +0100
-+++ xinit/startx.man	2009-12-06 23:25:48.000000000 +0100
-@@ -76,6 +76,28 @@
+--- a/man/startx.man
++++ b/man/startx.man
+@@ -76,6 +76,28 @@ startx -- -layout Multihead
  .RE
  #ifdef __SCOMAN__
  .PP
@@ -38,7 +36,7 @@ Index: xinit/startx.man
  To determine the client to run,
  .B startx
  looks for the following files, in order:
-@@ -134,38 +156,6 @@
+@@ -134,38 +156,6 @@ and
  files are found in the
  .I __xinitdir__
  directory.

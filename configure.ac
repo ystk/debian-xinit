@@ -20,32 +20,25 @@ dnl  PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl Process this file with autoconf to create configure.
 
-AC_PREREQ([2.57])
-AC_INIT(xinit,[1.2.0], [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],xinit)
+# Initialize Autoconf
+AC_PREREQ([2.60])
+AC_INIT([xinit], [1.3.2],
+        [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg], [xinit])
+AC_CONFIG_SRCDIR([Makefile.am])
+AC_CONFIG_HEADERS([config.h])
+
+# Initialize Automake
 AM_INIT_AUTOMAKE([foreign dist-bzip2])
 AM_MAINTAINER_MODE
 
-# Require xorg-macros: XORG_DEFAULT_OPTIONS
-m4_ifndef([XORG_MACROS_VERSION], [AC_FATAL([must install xorg-macros 1.3 or later before running autoconf/autogen])])
-XORG_MACROS_VERSION(1.3)
-
-AM_CONFIG_HEADER(config.h)
-
-AC_PROG_CC
-AM_PROG_CC_C_O
-XORG_PROG_RAWCPP
-AC_PROG_INSTALL
-AC_PATH_PROG(SED,sed)
-AC_CANONICAL_HOST
-
-AC_TYPE_SIGNAL
-AC_FUNC_FORK
-
-AC_CHECK_FUNCS([killpg])
-
-m4_ifdef([AS_HELP_STRING], , [m4_define([AS_HELP_STRING], m4_defn([AC_HELP_STRING]))])
-
+# Require X.Org macros 1.8 or later for AC_PROG_SED in XORG_DEFAULT_OPTIONS
+m4_ifndef([XORG_MACROS_VERSION],
+          [m4_fatal([must install xorg-macros 1.8 or later before running autoconf/autogen])])
+XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
+
+XORG_PROG_RAWCPP
+AC_CANONICAL_HOST
 
 # Build options
 DEFAULT_XRDB=xrdb
@@ -108,16 +101,21 @@ AC_ARG_WITH(launchd,            AS_HELP_STRING([--with-launchd], [Build with sup
 AC_ARG_WITH(launchagents-dir,   AS_HELP_STRING([--with-launchagents-dir=PATH], [Path to launchd's LaunchAgents directory (default: /Library/LaunchAgents)]),
                                 [ launchagentsdir="${withval}" ],
                                 [ launchagentsdir="/Library/LaunchAgents" ])
+AC_ARG_WITH(launchagent-xserver, AS_HELP_STRING([--with-launchagent-xserver=PATH], [Path to the X server which the LaunchAgent should start (if not provided, let startx decide)"]),
+                                 [ launchagentxserver="${withval}" ],
+                                 [ launchagentxserver="no" ])
 AC_ARG_WITH(launchdaemons-dir,  AS_HELP_STRING([--with-launchdaemons-dir=PATH], [Path to launchd's LaunchDaemonss directory (default: /Library/LaunchDaemons)]),
                                 [ launchdaemonsdir="${withval}" ],
                                 [ launchdaemonsdir="/Library/LaunchDaemons" ])
-AC_ARG_WITH(launchd-id-prefix,  AS_HELP_STRING([--with-launchd-id-prefix=PATH], [Prefix to use for launchd identifiers (default: org.x)]),
-                                [ launchdidprefix="${withval}" ],
-                                [ launchdidprefix="org.x" ])
+AC_ARG_WITH(launchd-id-prefix,  AS_HELP_STRING([--with-launchd-id-prefix=PATH], [Deprecated: Use --with-bundle-id-prefix.]),
+                                [ bundleidprefix="${withval}" ],
+                                [ bundleidprefix="org.x" ])
+AC_ARG_WITH(bundle-id-prefix,  AS_HELP_STRING([--with-bundle-id-prefix=PATH], [Prefix to use for bundle identifiers (default: org.x)]),
+                                [ bundleidprefix="${withval}" ])
 
 if test "x$LAUNCHD" = "xauto"; then
 	unset LAUNCHD
-	AC_CHECK_PROG(LAUNCHD, [launchd], [yes], [no])
+	AC_CHECK_PROG(LAUNCHD, [launchd], [yes], [no], [$PATH$PATH_SEPARATOR/sbin])
 fi
 
 TIGER_LAUNCHD=no
@@ -128,17 +126,19 @@ if test "x$LAUNCHD" = "xyes" ; then
 			TIGER_LAUNCHD=yes
 		;;
 	esac
-else
-        launchagentsdir=""
-        launchdaemonsdir=""
+        AC_CHECK_FUNC(dispatch_async,
+                              AC_DEFINE([HAVE_LIBDISPATCH], 1, [Define to 1 if you have the libdispatch (GCD) available]),
+                              [])
 fi
 
-AC_DEFINE_UNQUOTED(LAUNCHD_ID_PREFIX, "$launchdidprefix", [Prefix to use for launchd identifiers])
+AC_DEFINE_UNQUOTED(BUNDLE_ID_PREFIX, "$bundleidprefix", [Prefix to use for launchd identifiers])
 AC_SUBST([launchagentsdir])
 AC_SUBST([launchdaemonsdir])
-AC_SUBST([launchdidprefix])
+AC_SUBST([bundleidprefix])
+AC_SUBST([launchagentxserver])
 AM_CONDITIONAL(LAUNCHD, [test "x$LAUNCHD" = "xyes"])
 AM_CONDITIONAL(TIGER_LAUNCHD, [test "x$TIGER_LAUNCHD" = "xyes"])
+AM_CONDITIONAL(LAUNCHAGENT_XSERVER, [test "x$launchagentxserver" != "xno"])
 
 # Checks for pkg-config packages
 PKG_CHECK_MODULES(XINIT, x11)
@@ -149,8 +149,6 @@ case $host_os in
         ;;
 esac
 
-AC_SUBST(XINIT_CFLAGS)
-AC_SUBST(XINIT_LIBS)
 
 AC_PATH_PROGS(MCOOKIE, [mcookie], [$MCOOKIE],
   [$PATH:/bin:/usr/bin:/usr/lib:/usr/libexec:/usr/local/bin])
@@ -170,11 +168,10 @@ fi
 AC_SUBST(STARTX_COOKIE_FLAGS)
 
 # Additional substitutions in startx, xinitrc & man pages
-ARCHMANDEFS=""
 SHELL_CMD="/bin/sh"
 XSERVERNAME="Xorg"
 XCONFIGFILE="xorg.conf"
-XCONFIGFILEMAN='${XCONFIGFILE} (__filemansuffix__)'
+XCONFIGFILEMAN='${XCONFIGFILE} (${FILE_MAN_SUFFIX})'
 case $host_os in
     cygwin*)
 	XSERVERNAME="XWin"
@@ -190,11 +187,11 @@ case $host_os in
 	;;
     *sco*)
 	SHELL_CMD="/bin/ksh"
-	ARCHMANDEFS="-D__SCOMAN__"
+	SCOMAN=1
 	;;
 esac
 AC_SUBST(SHELL_CMD)
-AC_SUBST(ARCHMANDEFS)
+AC_SUBST(SCOMAN)
 AC_SUBST(XSERVERNAME)
 AC_SUBST(XCONFIGFILE)
 AC_SUBST(XCONFIGFILEMAN)
@@ -209,5 +206,9 @@ AC_SUBST(XAUTH)
 AC_SUBST(XINIT)
 AC_SUBST(XINITDIR)
 
-AC_OUTPUT([Makefile])
-AC_OUTPUT([privileged_startx/Makefile])
+AC_CONFIG_FILES([Makefile
+	man/Makefile
+	launchd/Makefile
+	launchd/privileged_startx/Makefile
+	launchd/user_startx/Makefile])
+AC_OUTPUT

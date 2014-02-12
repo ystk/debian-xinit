@@ -5,11 +5,9 @@ The trap patch didn't seem to work on reboot.
  startx.cpp |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: xinit/startx.cpp
-===================================================================
---- xinit.orig/startx.cpp	2009-12-06 23:26:32.000000000 +0100
-+++ xinit/startx.cpp	2009-12-06 23:26:37.000000000 +0100
-@@ -271,7 +271,7 @@
+--- a/startx.cpp
++++ b/startx.cpp
+@@ -274,7 +274,7 @@ if [ x"$enable_xauth" = x1 ] ; then
      dummy=0
  
      XCOMM create a file with auth information for the server. ':0' is a dummy.

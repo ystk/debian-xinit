@@ -2,11 +2,9 @@
  startx.cpp |   15 +++++++--------
  1 file changed, 7 insertions(+), 8 deletions(-)
 
-Index: xinit/startx.cpp
-===================================================================
---- xinit.orig/startx.cpp	2009-12-06 23:12:44.000000000 +0100
-+++ xinit/startx.cpp	2009-12-06 23:23:41.000000000 +0100
-@@ -242,18 +242,17 @@
+--- a/startx.cpp
++++ b/startx.cpp
+@@ -245,18 +245,17 @@ if [ x"$enable_xauth" = x1 ] ; then
      removelist=
  
      XCOMM set up default Xauth info for this machine

@@ -1,3 +1,30 @@
+xinit (1.3.2-1) unstable; urgency=low
+
+  * New upstream release. Visible change:
+    - startx: Choose an unused $DISPLAY by default on all platforms
+
+ -- Cyril Brulebois <kibi@debian.org>  Sat, 16 Jun 2012 20:53:25 +0000
+
+xinit (1.3.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update Uploaders list. Thanks, David & Brice!
+  * Wrap Depends/Recommends.
+  * Get rid of obsolete Replaces on xbase-clients from before lenny.
+  * Update 03_debian_startx_manpage.diff, startx.man moved below man/.
+  * Bump Standards-Version to 3.9.2 (no changes).
+
+ -- Cyril Brulebois <kibi@debian.org>  Mon, 25 Jul 2011 10:47:00 +0200
+
+xinit (1.3.0-1) unstable; urgency=low
+
+  * New upstream release.
+  * Refresh patch: 001_debian_xinitrc.diff (context tweak).
+  * Refresh other patches: line offsets.
+  * Add myself to Uploaders.
+
+ -- Cyril Brulebois <kibi@debian.org>  Wed, 03 Nov 2010 03:20:59 +0100
+
 xinit (1.2.0-2) unstable; urgency=low
 
   [ Julien Cristau ]
@@ -35,9 +62,6 @@ xinit (1.2.0-1) unstable; urgency=low
     (closes: #549377).
   * 06_move_serverauthfile_into_tmp.diff: use mktemp --tmpdir to honour
     $TMPDIR (closes: #480958).
-
-  [ Brice Goglin ]
-  * 
 
  -- Brice Goglin <bgoglin@debian.org>  Sun, 06 Dec 2009 23:32:47 +0100
 
