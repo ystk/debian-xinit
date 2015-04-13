@@ -9,12 +9,10 @@
 
 include debian/xsfbs/xsfbs.mk
 
-CFLAGS = -Wall -g
-ifneq (,$(filter noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
-else
-	CFLAGS += -O2
-endif
+DPKG_EXPORT_BUILDFLAGS = 1
+DEB_CFLAGS_MAINT_APPEND = -Wall -g
+include /usr/share/dpkg/buildflags.mk
+
 ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 	MAKEFLAGS += -j$(NUMJOBS)
@@ -41,8 +39,7 @@ build-stamp: configure $(STAMP_DIR)/genscripts
 	../configure --prefix=/usr --mandir=\$${prefix}/share/man \
 		     --infodir=\$${prefix}/share/info $(confflags) \
 		     --with-xinitdir=/etc/X11/xinit \
-		     --with-xterm=/usr/bin/xterm \
-		     CFLAGS="$(CFLAGS)"
+		     --with-xterm=/usr/bin/xterm
 	cd build && $(MAKE) || exit 1
 	>$@
 
@@ -72,6 +69,7 @@ install: build
 
 	install -d debian/tmp/etc/X11/xinit
 	install -m 755 debian/local/xserverrc debian/tmp/etc/X11/xinit
+	chmod 755 debian/tmp/etc/X11/xinit/xinitrc
 
 # Build architecture-dependent files here.
 binary-arch: build install

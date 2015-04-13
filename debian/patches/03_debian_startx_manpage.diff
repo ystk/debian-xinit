@@ -7,9 +7,9 @@ Robinson.
 
 --- a/man/startx.man
 +++ b/man/startx.man
-@@ -76,6 +76,28 @@ startx -- -layout Multihead
- .RE
- #ifdef __SCOMAN__
+@@ -93,6 +93,28 @@ looks for the following files, in order:
+ ..
+ .if !'x.__SCOMAN__'x.' .ig
  .PP
 +Note that in the Debian system, what many people traditionally put in the
 +.I .xinitrc
@@ -35,8 +35,8 @@ Robinson.
 +.PP
  To determine the client to run,
  .B startx
- looks for the following files, in order:
-@@ -134,38 +156,6 @@ and
+ first looks for a file called
+@@ -135,38 +157,6 @@ and
  files are found in the
  .I __xinitdir__
  directory.
